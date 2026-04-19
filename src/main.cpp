@@ -12,6 +12,7 @@
 #include <shaders/vao.h>
 #include <shaders/vbo.h>
 #include <shaders/ebo.h>
+#include "textures.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
@@ -30,7 +31,7 @@ int main() {
 
     GLFWwindow* window;
 
-    window = glfwCreateWindow(800, 600, "Silver", NULL, NULL);
+    window = glfwCreateWindow(800, 600, "SilverBin Editor", NULL, NULL);
     if (window == NULL) {
         std::cout << "failed to open/create glfw window" << std::endl;
         glfwTerminate();
@@ -42,6 +43,22 @@ int main() {
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         std::cout << "failed to initialize glad" << std::endl;
         return -1;
+    }
+
+    int icon_width, icon_height, icon_channels; // this is the same system as textures lol
+    unsigned char* icon_pixels = stbi_load("icon.png", &icon_width, &icon_height, &icon_channels, 4);
+
+    if (icon_pixels) {
+        GLFWimage icon[1];
+
+        icon[0].width = icon_width;
+        icon[0].height = icon_height;
+        icon[0].pixels = icon_pixels;
+
+        glfwSetWindowIcon(window, 1, icon);
+        stbi_image_free(icon_pixels);
+    } else {
+        std::cout << "no icon pixels" << std::endl;
     }
 
     glEnable(GL_DEPTH_TEST);
@@ -78,34 +95,8 @@ int main() {
     vbo1.Unbind();
     ebo1.Unbind();
 
-    int width_img, height_img, num_color_channels;
-    stbi_set_flip_vertically_on_load(true);
-    unsigned char* bytes = stbi_load("steamhappy.png", &width_img, &height_img, &num_color_channels, 4);
-    if (!bytes) {
-        std::cout << "Failed to load texture: steamhappy.png" << std::endl;
-        return -1;
-    }
-
-    GLuint texture;
-    glGenTextures(1, &texture);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width_img, height_img, 0, GL_RGBA, GL_UNSIGNED_BYTE, bytes);
-    glGenerateMipmap(GL_TEXTURE_2D);
-
-    stbi_image_free(bytes);
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    GLuint tex0_uni = glGetUniformLocation(shader_program.id, "tex0");
-    shader_program.Activate();
-    glUniform1i(tex0_uni, 0);
+    Texture steamhappy_texture("steamhappy.png", GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
+    steamhappy_texture.texture_unit(shader_program, "tex0", 0);
 
     GLuint scale_uni = glGetUniformLocation(shader_program.id, "scale");
     glUniform1f(scale_uni, 0.0f);
@@ -116,8 +107,8 @@ int main() {
 
         shader_program.Activate();
         vao1.Bind();
+        steamhappy_texture.Bind();
         
-        glBindTexture(GL_TEXTURE_2D, texture);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
         glfwSwapBuffers(window);
@@ -128,6 +119,7 @@ int main() {
     vbo1.Delete();
     ebo1.Delete();
     shader_program.Delete();
+    steamhappy_texture.Delete();
 
     glfwDestroyWindow(window);
     glfwTerminate();

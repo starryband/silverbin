@@ -2,6 +2,9 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <stb/stb_image.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include <fstream>
 #include <sstream>
@@ -13,6 +16,12 @@
 #include <shaders/vbo.h>
 #include <shaders/ebo.h>
 #include "textures.h"
+#include "camera.h"
+#include <text.h>
+#include <engine_events/intro.h>
+
+const unsigned int width = 800;
+const unsigned int height = 600;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
@@ -31,7 +40,7 @@ int main() {
 
     GLFWwindow* window;
 
-    window = glfwCreateWindow(800, 600, "SilverBin Editor", NULL, NULL);
+    window = glfwCreateWindow(width, height, "SilverBin", NULL, NULL);
     if (window == NULL) {
         std::cout << "failed to open/create glfw window" << std::endl;
         glfwTerminate();
@@ -62,7 +71,7 @@ int main() {
     }
 
     glEnable(GL_DEPTH_TEST);
-    glViewport(0, 0, 800, 600);
+    glViewport(0, 0, width, height);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     GLfloat vertices[] =
@@ -98,18 +107,53 @@ int main() {
     Texture steamhappy_texture("steamhappy.png", GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
     steamhappy_texture.texture_unit(shader_program, "tex0", 0);
 
+    Shader text_shader("shaders/text.vert", "shaders/text.frag");
+    TextRenderer text_renderer("fonts/arial.ttf", 48, text_shader, width, height);
+
+    glEnable(GL_DEPTH_TEST);
+
+    Camera camera(width, height, glm::vec3(0.0f, 0.0f, 0.0f));
+
     GLuint scale_uni = glGetUniformLocation(shader_program.id, "scale");
     glUniform1f(scale_uni, 0.0f);
 
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+    Intro intro({
+        {"Made with Silver", 1.0f, 1.5f},
+    });
+
+    float last_frame = 0.0f;
+
     while (!glfwWindowShouldClose(window)) {
+        float current_frame = glfwGetTime();
+        float delta_time = current_frame - last_frame;
+        
+        last_frame = current_frame;
+
+        if (!intro.done) {
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            intro.update(delta_time);
+            intro.render(text_renderer, width, height);
+            glfwSwapBuffers(window);
+            glfwPollEvents();
+            continue;
+        }
+
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         shader_program.Activate();
+        camera.inputs(window);
+        camera.matrix(45.0f, 0.1f, 100.0f, shader_program, "cam_matrix");
+
         vao1.Bind();
         steamhappy_texture.Bind();
-        
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, sizeof(indices)/sizeof(int), GL_UNSIGNED_INT, 0);
+        vao1.Unbind();
+
+        text_renderer.render("SilverBin Editor Debug Text:tm:", 10.0f, 10.0f, 1.0f, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
 
         glfwSwapBuffers(window);
         glfwPollEvents();

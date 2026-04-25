@@ -17,16 +17,24 @@ void Camera::matrix(float fov_degrees, float near_plane, float far_plane, Shader
 }
 
 void Camera::inputs(GLFWwindow* window) {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+    bool rmb_pressed = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
+
+    if (rmb_pressed) {
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        focused = true;
+    } else {
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
         focused = false;
         first_click = true;
+        return;
     }
 
+    /*
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS && !focused) {
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         focused = true;
     }
+        */
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         position += speed * orientation;

@@ -12,6 +12,7 @@
 #include <cmath>
 
 #include "shaders.h"
+#include "ui.h"
 #include <shaders/vao.h>
 #include <shaders/vbo.h>
 #include <shaders/ebo.h>
@@ -25,6 +26,21 @@ const unsigned int height = 600;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
+}
+
+double previous_time = 0.0;
+int frame_count = 0;
+int current_fps = 0;
+
+void calculate_fps() {
+    double current_time = glfwGetTime();
+    frame_count++;
+
+    if (current_time - previous_time >= 1.0) {
+        current_fps = frame_count;
+        frame_count = 0;
+        previous_time = current_time;
+    }
 }
 
 int main() {
@@ -88,6 +104,8 @@ int main() {
         0, 3, 2, // Lower right triangle
     };
 
+    UI ui(window);
+
     Shader shader_program("shaders/default.vert", "shaders/default.frag");
     
     VAO vao1;
@@ -108,7 +126,9 @@ int main() {
     steamhappy_texture.texture_unit(shader_program, "tex0", 0);
 
     Shader text_shader("shaders/text.vert", "shaders/text.frag");
-    TextRenderer text_renderer("fonts/arial.ttf", 48, text_shader, width, height);
+
+    TextRenderer text_renderer_intro("fonts/din_light.ttf", 48, text_shader, width, height);
+    TextRenderer text_renderer_engine("fonts/arial.ttf", 48, text_shader, width, height);
 
     glEnable(GL_DEPTH_TEST);
 
@@ -120,7 +140,7 @@ int main() {
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     Intro intro({
-        {"Made with Silver", 1.0f, 1.5f},
+        {"Made with Silver", 0.5f, 1.0f},
     });
 
     float last_frame = 0.0f;
@@ -135,9 +155,14 @@ int main() {
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             intro.update(delta_time);
-            intro.render(text_renderer, width, height);
+            intro.render(text_renderer_intro, width, height);
             glfwSwapBuffers(window);
             glfwPollEvents();
+
+            if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+                intro.done = true;
+            }
+
             continue;
         }
 
@@ -153,7 +178,22 @@ int main() {
         glDrawElements(GL_TRIANGLES, sizeof(indices)/sizeof(int), GL_UNSIGNED_INT, 0);
         vao1.Unbind();
 
-        text_renderer.render("SilverBin Editor Debug Text:tm:", 10.0f, 10.0f, 1.0f, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+        text_renderer_engine.render("SilverBin Editor Debug Text:tm:", 10.0f, 10.0f, 1.0f, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+
+        calculate_fps();
+
+        std::string fps_text = "FPS: " + std::to_string(current_fps);
+        
+        text_renderer_engine.render(
+            fps_text,
+            10.0f, 550.0f,
+            0.7f,
+            glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)
+        );
+
+        ui.begin();
+        ui.render();
+        ui.end();
 
         glfwSwapBuffers(window);
         glfwPollEvents();

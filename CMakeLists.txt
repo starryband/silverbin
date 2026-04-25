@@ -23,4 +23,4 @@ set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 add_executable(silver ${SOURCES})
 
 target_link_libraries(silver glfw3dll freetype assimp)
-target_include_directories(silver PRIVATE include/freetype include/assimp)
+target_include_directories(silver PRIVATE include/imgui include/freetype include/assimp)

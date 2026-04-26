@@ -104,6 +104,10 @@ int main() {
         0, 3, 2, // Lower right triangle
     };
 
+    GLfloat light_vertices[] = {
+
+    };
+
     UI ui(window);
 
     Shader shader_program("shaders/default.vert", "shaders/default.frag");

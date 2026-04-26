@@ -1,10 +1,30 @@
-# SilverBin Engine
-SilverBin is a game engine that seeks to provide a Roblox-like development environment, 
-but with a lot more freedom over user hardware.
+# SilverBin Game Engine
+SilverBin is a game engine that seeks to provide a Roblox-like development environment, but with a lot more freedom over user hardware.
+Please note that this is still in early development and progress will most likely not be made for a long time.
 
-**SB is still in early development and progress will most likely not be made for a long time.**
+## Features
+- OpenGL Rendering
+- Basic camera system
+- Texture loading
+**More features will be added as it's worked on**
+## Prerequisites
+- MinGW64
+- CMake
+## Build Instructions
+```
+git clone https://github.com/starryband/silverbin.git
+cd silverbin
 
-## Installation
-1. Download the precompiled Windows libraries FreeType2 and GLFW.
-2. Git clone the repository.
-3. Create a folder titled "lib" inside of the silver root folder.
+mkdir build
+cd build
+
+cmake -B build
+cmake --build build
+```
+## Running
+1. Follow the previous instructions in Build Instructions
+2. Run the following commands:
+```
+cd bin
+./silver.exe
+```

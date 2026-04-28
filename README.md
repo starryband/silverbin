@@ -6,7 +6,7 @@ Please note that this is still in early development and progress will most likel
 - OpenGL Rendering
 - Basic camera system
 - Texture loading
-**More features will be added as it's worked on**
+- **More features will be added as the engine is worked on**
 ## Prerequisites
 - MinGW64
 - CMake

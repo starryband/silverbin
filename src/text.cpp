@@ -74,13 +74,19 @@ TextRenderer::TextRenderer(const std::string& font_path, unsigned int font_size,
 }
 
 void TextRenderer::render(const std::string& text, float x, float y, float scale, glm::vec4 color) {
+    GLboolean blending_enabled = glIsEnabled(GL_BLEND);
+    if (!blending_enabled) {
+        glEnable(GL_BLEND);
+    }
+
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     shader.Activate();
     glUniform4f(glGetUniformLocation(shader.id, "text_color"), color.x, color.y, color.z, color.w);
     glActiveTexture(GL_TEXTURE0);
     glBindVertexArray(vao_id);
 
     glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     for (char c : text) {
         Character ch = characters[c];
@@ -110,5 +116,8 @@ void TextRenderer::render(const std::string& text, float x, float y, float scale
 
     glBindVertexArray(0);
     glBindTexture(GL_TEXTURE_2D, 0);
-    glDisable(GL_BLEND);
+
+    if (!blending_enabled) {
+        glDisable(GL_BLEND);
+    }
 }

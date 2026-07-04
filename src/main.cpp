@@ -86,6 +86,9 @@ int main() {
     }
 
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_STENCIL_TEST);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
     glViewport(0, 0, width, height);
 
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
@@ -93,6 +96,7 @@ int main() {
     UI ui(window);
 
     Shader shader_program("shaders/default.vert", "shaders/default.frag");
+    Shader outline_program("shaders/outline.vert", "shaders/outline.frag");
 
     Texture steamhappy_texture("steamhappy.png", GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
     steamhappy_texture.texture_unit(shader_program, "tex0", 0);
@@ -138,8 +142,8 @@ int main() {
         last_frame = current_frame;
 
         if (!intro.done) {
-            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            glClearColor(0.15f, 0.16f, 0.20f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
             intro.update(delta_time);
             intro.render(text_renderer_intro, width, height);
@@ -154,8 +158,11 @@ int main() {
             continue;
         }
 
-        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glDisable(GL_SCISSOR_TEST);
+        glDisable(GL_BLEND);
+
+        glClearColor(0.15f, 0.16f, 0.20f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
         shader_program.Activate();
 
@@ -172,7 +179,26 @@ int main() {
         camera.inputs(window);
         camera.matrix(45.0f, 0.1f, 100.0f, shader_program, "cam_matrix");
 
+        glStencilFunc(GL_ALWAYS, 1, 0xFF);
+        glStencilMask(0xFF);
         test_cube.Draw(shader_program);
+
+        glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+        glStencilMask(0x00);
+        glDisable(GL_DEPTH_TEST);
+
+        outline_program.Activate();
+        outline_program.setMat4("model", model);
+
+        camera.matrix(45.0f, 0.1f, 100.0f, outline_program, "cam_matrix");
+
+        glUniform1f(glGetUniformLocation(outline_program.id, "outlining"), 0.08f);
+
+        test_cube.Draw(outline_program);
+
+        glStencilMask(0xFF);
+        glStencilFunc(GL_ALWAYS, 0, 0xFF);
+        glEnable(GL_DEPTH_TEST);
 
         text_renderer_engine.render("SilverBin Editor Debug Text:tm:", 10.0f, 10.0f, 1.0f, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
 

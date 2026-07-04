@@ -1,4 +1,6 @@
 #include "ui.h"
+#include "engine_events/functions/open_file_dialog.h"
+#include "model.h"
 
 UI::UI(GLFWwindow* window) {
     this->window = window;
@@ -19,10 +21,13 @@ void UI::begin() {
 
 void UI::render() {
     ImGui::Begin("debug");
-    ImGui::Text("hi from imgui");
+    ImGui::Text("Silver Tools");
 
-    if (ImGui::Button("Click me")) {
-        std::cout << "button pressed\n";
+    if (ImGui::Button("Load Model")) {
+        std::wstring path = FileDialogs::OpenFileDialog();
+        if (!path.empty()) {
+            std::cout << "found file" << std::endl;
+        }
     }
 
     ImGui::End();
